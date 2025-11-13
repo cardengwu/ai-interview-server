@@ -1,5 +1,6 @@
 fastapi
-uvicorn[standard]
-httpx
-websockets
+uvicorn
 python-multipart
+openai-whisper
+ffmpeg-python
+torch==2.0.1
