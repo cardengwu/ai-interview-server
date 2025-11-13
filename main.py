@@ -1,12 +1,9 @@
 from fastapi import FastAPI, UploadFile, File
-from faster_whisper import WhisperModel
+import whisper_timestamped as whisper
 import tempfile
 import os
 
 app = FastAPI()
-
-# Load model at startup (tiny 模型最適合 Railway)
-model = WhisperModel("tiny", device="cpu", compute_type="int8")
 
 @app.get("/")
 def root():
@@ -14,16 +11,19 @@ def root():
 
 @app.post("/transcribe")
 async def transcribe(file: UploadFile = File(...)):
-    # save uploaded file
+
+    # save uploaded file temporary
     with tempfile.NamedTemporaryFile(delete=False, suffix=".m4a") as tmp:
         audio_path = tmp.name
         tmp.write(await file.read())
 
-    # transcribe
-    segments, info = model.transcribe(audio_path)
+    # load tiny model (fastest, works on Railway)
+    model = whisper.load_model("tiny", device="cpu")
 
-    # collect text
-    text = "".join([segment.text for segment in segments])
+    # transcribe audio
+    result = whisper.transcribe(model, audio_path)
 
     os.remove(audio_path)
-    return {"text": text}
+
+    # result["text"] contains transcription
+    return {"text": result["text"]}
