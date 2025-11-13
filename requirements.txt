@@ -1,6 +1,4 @@
 fastapi
 uvicorn
 python-multipart
-ctranslate2
-whisper-timestamped
-tokenizers
+faster-whisper==0.10.0
