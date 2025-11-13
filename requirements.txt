@@ -3,4 +3,3 @@ uvicorn[standard]
 httpx
 websockets
 python-multipart
-gunicorn
