@@ -1,9 +1,8 @@
 from fastapi import FastAPI, UploadFile, File
-import whisper
-import tempfile
-import os
+from openai import OpenAI
 
 app = FastAPI()
+client = OpenAI()
 
 @app.get("/")
 async def root():
@@ -11,19 +10,14 @@ async def root():
 
 @app.post("/transcribe")
 async def transcribe(file: UploadFile = File(...)):
-    # Save uploaded file to a temporary file
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".m4a") as tmp:
-        temp_path = tmp.name
-        content = await file.read()
-        tmp.write(content)
 
-    # Load the small model (fits Railway free plan)
-    model = whisper.load_model("small")
+    # Read uploaded audio file
+    audio_bytes = await file.read()
 
-    # Transcribe the file
-    result = model.transcribe(temp_path)
+    # Call OpenAI Whisper API
+    response = client.audio.transcriptions.create(
+        file=(file.filename, audio_bytes),
+        model="gpt-4o-transcribe"
+    )
 
-    # Remove temp file
-    os.remove(temp_path)
-
-    return {"text": result["text"]}
+    return {"text": response.text}
