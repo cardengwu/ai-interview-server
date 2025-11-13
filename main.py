@@ -1,5 +1,5 @@
 from fastapi import FastAPI, UploadFile, File
-import whisper_timestamped as whisper
+from faster_whisper import WhisperModel
 import tempfile
 import os
 
@@ -11,18 +11,18 @@ def root():
 
 @app.post("/transcribe")
 async def transcribe(file: UploadFile = File(...)):
-    # save uploaded file
+    # save temporary audio file
     with tempfile.NamedTemporaryFile(delete=False, suffix=".m4a") as tmp:
         audio_path = tmp.name
         tmp.write(await file.read())
 
-    # load tiny model
-    model = whisper.load_model("tiny", device="cpu")
+    # load tiny model (smallest, works on Railway)
+    model = WhisperModel("tiny", device="cpu")
+    segments, info = model.transcribe(audio_path)
 
-    # transcribe
-    result = whisper.transcribe(model, audio_path)
+    # join transcript
+    text = " ".join([seg.text for seg in segments])
 
-    # clean up
     os.remove(audio_path)
 
-    return {"text": result["text"]}
+    return {"text": text}
