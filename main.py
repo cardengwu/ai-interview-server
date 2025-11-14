@@ -1,19 +1,9 @@
 from fastapi import FastAPI, UploadFile, File
-from fastapi.middleware.cors import CORSMiddleware
-from faster_whisper import WhisperModel
+import whisper_timestamped as whisper
 import tempfile
 import os
 
 app = FastAPI()
-
-# CORS for frontend usage (very important)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 @app.get("/")
 def root():
@@ -21,21 +11,18 @@ def root():
 
 @app.post("/transcribe")
 async def transcribe(file: UploadFile = File(...)):
-    # Save uploaded audio to a temporary file
+    # Save upload file
     with tempfile.NamedTemporaryFile(delete=False, suffix=".m4a") as tmp:
         audio_path = tmp.name
         tmp.write(await file.read())
 
-    # Load tiny model (fastest + smallest)
-    model = WhisperModel("tiny", device="cpu", compute_type="int8")
+    # Load tiny model
+    model = whisper.load_model("tiny", device="cpu")
 
-    # Transcribe audio
-    segments, info = model.transcribe(audio_path)
+    # Transcribe
+    result = whisper.transcribe(model, audio_path)
 
-    # Combine text segments
-    text = "".join([seg.text for seg in segments])
-
-    # Clean up
+    # Cleanup
     os.remove(audio_path)
 
-    return {"text": text}
+    return {"text": result["text"]}
