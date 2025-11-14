@@ -11,15 +11,16 @@ def root():
 
 @app.post("/transcribe")
 async def transcribe(file: UploadFile = File(...)):
-    # Save upload file
+
+    # Save the uploaded file temporarily
     with tempfile.NamedTemporaryFile(delete=False, suffix=".m4a") as tmp:
         audio_path = tmp.name
         tmp.write(await file.read())
 
-    # Load tiny model
+    # Load the tiny model (fastest and smallest)
     model = whisper.load_model("tiny", device="cpu")
 
-    # Transcribe
+    # Run transcription
     result = whisper.transcribe(model, audio_path)
 
     # Cleanup
